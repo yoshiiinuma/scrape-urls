@@ -1,0 +1,39 @@
+{
+  "name": "scrape-urls",
+  "version": "1.0.0",
+  "description": "Scrape all the url links from the specified website.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build2": "node_modules/babel-cli/bin/babel.js src --out-dir lib",
+    "build": "babel-cli src --out-dir lib",
+    "publish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yoshiiinuma/scrape-urls.git"
+  },
+  "babel": {
+    "presets": ["es2015"]
+  },
+  "keywords": [
+    "scrape",
+    "extract",
+    "url",
+    "urls",
+    "uri",
+    "link",
+    "links"
+  ],
+  "author": "Yoshiaki Iinuma",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yoshiiinuma/scrape-urls/issues"
+  },
+  "homepage": "https://github.com/yoshiiinuma/scrape-urls#readme",
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1"
+  }
+}
