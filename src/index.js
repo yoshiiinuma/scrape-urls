@@ -96,7 +96,10 @@ function getLinks(uri) {
         allLinks.push(uri);
         let r = extractLinks({ uri: uri, html: html });
         if (r.links.length > 0) {
-          return Promise.all(r.links.map(getLinks));
+          //return Promise.all(r.links.map(getLinks));
+          return r.links.reduce((promise, link) => {
+            return promise.then(() => getLinks(link));
+          }, Promise.resolve());
         }
         return;
       }
