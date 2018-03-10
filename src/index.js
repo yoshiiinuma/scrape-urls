@@ -8,23 +8,37 @@ import { URL } from 'url';
 const MAX_REQUESTS = 30;
 
 function usage() {
-  console.log("USAGE: node index.js <URL> [LIMIT]");
+  console.log("USAGE: npm run exec -- <URL> [--async] [--limit <NUM>]");
+  console.log("USAGE: node index.js <URL> [--async] [--limit <NUM>]");
   console.log("");
   console.log("  LIMIT: Max number of total requests (Default " + MAX_REQUESTS + ")");
   console.log("");
 }
 
-if (process.argv.length < 3 || process.argv.length > 4) {
-  console.log(process.argv);
-  console.log(process.argv.length);
+if (process.argv.length < 3) {
+  //console.log(process.argv);
+  //console.log(process.argv.length);
   usage();
   process.exit();
 }
 
 const original = process.argv[2];
-var limit = process.argv[3] || MAX_REQUESTS;
+var limit = MAX_REQUESTS;
+var async = false;
 var rootUrl = "";
 var cnt = 0;
+
+for (var i = 2; i < process.argv.length; i++) {
+  if (process.argv[i] === '--async') {
+    async = true;
+  }
+  if (process.argv[i] === '--limit') {
+    if (process.argv[i+1]) {
+      limit = Number(process.argv[i+1]);
+      i++;
+    }
+  }
+}
 
 try {
   rootUrl = new URL(original);
@@ -96,10 +110,13 @@ function getLinks(uri) {
         allLinks.push(uri);
         let r = extractLinks({ uri: uri, html: html });
         if (r.links.length > 0) {
-          //return Promise.all(r.links.map(getLinks));
-          return r.links.reduce((promise, link) => {
-            return promise.then(() => getLinks(link));
-          }, Promise.resolve());
+          if (async) {
+            return Promise.all(r.links.map(getLinks));
+          } else {
+            return r.links.reduce((promise, link) => {
+              return promise.then(() => getLinks(link));
+            }, Promise.resolve());
+          }
         }
         return;
       }
