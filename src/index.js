@@ -16,17 +16,14 @@ function usage() {
 }
 
 if (process.argv.length < 3) {
-  //console.log(process.argv);
-  //console.log(process.argv.length);
   usage();
   process.exit();
 }
 
-const original = process.argv[2];
+var original = process.argv[2].replace(/\/$/, '');
 var limit = MAX_REQUESTS;
 var async = false;
-var rootUrl = "";
-var cnt = 0;
+var rootUrl;
 
 for (var i = 2; i < process.argv.length; i++) {
   if (process.argv[i] === '--async') {
@@ -50,8 +47,10 @@ try {
 
 const regexHost = new RegExp('^https?://' + rootUrl.host);
 
+var total = 1;
+var checked = {};
 var visited = {};
-var visiting = [];
+var allVisited = [];
 var allLinks = [];
 
 function extractLinks(arg) {
@@ -75,20 +74,21 @@ function extractLinks(arg) {
         anchors.push({ href: href, text: text });
       } else if (href.startsWith('/')) {
         rel.push({ href: href, text: text });
-        if (!visited[href]) {
-          let uri = arg.uri;
-          if (uri.endsWith('/')) {
-            uri = uri.replace(/\/$/, '') + href;
-          } else {
-            uri += href;
-          }
-          notVisited.push(uri);
+        let uri = rootUrl.origin + href;
+        if (!checked[uri]) {
+          checked[uri] = true;
+          let h = { href: uri, id: ++total };
+          notVisited.push(h);
+          allLinks.push(h);
         }
       } else {
         if (regexHost.test(href)) {
           abs.push({ href: href, text: text });
-          if (!visited[href]) {
-            notVisited.push(href);
+          if (!checked[href]) {
+            checked[href] = true;
+            let h = { href: href, id: ++total };
+            notVisited.push(h);
+            allLinks.push(h);
           }
         } else {
           externals.push({ href: href, text: text });
@@ -96,34 +96,49 @@ function extractLinks(arg) {
       }
     }
   })
-  return { links: notVisited, externals: externals, absolutes: abs, relatives: rel, anchors: anchors};
+  return {
+    links: notVisited,
+    externals: externals,
+    absolutes: abs,
+    relatives: rel,
+    anchors: anchors,
+    numOfNotVisited: i
+  };
 }
 
 function getLinks(uri) {
-  return rp(uri)
+  if (visited[uri.href]) return Promise.reject({ uri, error: 'Visited URL Given' }); 
+  if (uri.id > limit) return;
+
+  checked[uri.href] = true;
+  visited[uri.href] = true;
+  //console.log(uri.id + ': ' + uri.href);
+
+  return rp(uri.href)
     .then(html => {
-      if (!visited[uri]) {
-        if (cnt > limit) return;
-        cnt++;
-        console.log(uri);
-        visited[uri] = true;
-        allLinks.push(uri);
-        let r = extractLinks({ uri: uri, html: html });
-        if (r.links.length > 0) {
-          if (async) {
-            return Promise.all(r.links.map(getLinks));
-          } else {
-            return r.links.reduce((promise, link) => {
-              return promise.then(() => getLinks(link));
-            }, Promise.resolve());
-          }
+      allVisited.push(uri);
+      let r = extractLinks({ uri: uri, html: html });
+      if (r.links.length > 0) {
+        if (async) {
+          return Promise.all(r.links.map(getLinks));
+        } else {
+          return r.links.reduce((promise, link) => {
+            return promise.then(() => getLinks(link));
+          }, Promise.resolve());
         }
-        return;
       }
     })
-    //.catch(err => console.log(err));
+    .catch(err => console.log(err));
 }
 
-getLinks(original)
-  .then(() => console.log(allLinks))
+
+var startUrl = { href: original, id: 1 };
+allLinks.push(startUrl);
+
+getLinks(startUrl)
+  .then(() => {
+    //allVisited.forEach((r) => console.log(r.id + ': ' + r.href));
+    allLinks.forEach((r) => console.log(r.href));
+  })
   .catch(err => console.log(err));
+
