@@ -8,12 +8,17 @@ import { URL } from 'url';
 const MAX_REQUESTS = 30;
 
 function usage() {
-  console.log("USAGE: npm run exec -- <URL> [--async] [--limit <NUM>]");
-  console.log("USAGE: node index.js <URL> [--async] [--limit <NUM>]");
-  console.log("");
-  console.log("  LIMIT: Max number of total requests (Default " + MAX_REQUESTS + ")");
+  console.log("USAGE: npm run exec -- <URL> [OPTION]...");
+  console.log("USAGE: node index.js <URL> [OPTION]...");
+  console.log("\n  OPTIONS: ");
+  console.log("  --async: Run asynchronously");
+  console.log("  --limit LIMIT: Specify Max number of total requests (Default " + MAX_REQUESTS + ")");
+  console.log("  --visit: Print only visited");
+  console.log("  --DEBUG: Print debug messages");
   console.log("");
 }
+
+console.log(process.argv);
 
 if (process.argv.length < 3) {
   usage();
@@ -23,9 +28,12 @@ if (process.argv.length < 3) {
 var original = process.argv[2].replace(/\/$/, '');
 var limit = MAX_REQUESTS;
 var async = false;
+var debug = false;
+var onlyVisited = false;
 var rootUrl;
 
 for (var i = 2; i < process.argv.length; i++) {
+  console.log(i + ': ' + process.argv[i]);
   if (process.argv[i] === '--async') {
     async = true;
   }
@@ -34,6 +42,12 @@ for (var i = 2; i < process.argv.length; i++) {
       limit = Number(process.argv[i+1]);
       i++;
     }
+  }
+  if (process.argv[i] === '--DEBUG') {
+    debug = true;
+  }
+  if (process.argv[i] === '--visit') {
+    onlyVisited = true;
   }
 }
 
@@ -78,6 +92,7 @@ function extractLinks(arg) {
         if (!checked[uri]) {
           checked[uri] = true;
           let h = { href: uri, id: ++total };
+          if (debug) console.log('>>> ' + h.id + ': ' + h.href);
           notVisited.push(h);
           allLinks.push(h);
         }
@@ -87,6 +102,7 @@ function extractLinks(arg) {
           if (!checked[href]) {
             checked[href] = true;
             let h = { href: href, id: ++total };
+            if (debug) console.log('>>> ' + h.id + ': ' + h.href);
             notVisited.push(h);
             allLinks.push(h);
           }
@@ -112,7 +128,7 @@ function getLinks(uri) {
 
   checked[uri.href] = true;
   visited[uri.href] = true;
-  //console.log(uri.id + ': ' + uri.href);
+  if (debug) console.log('VISIT: ' + uri.id + ': ' + uri.href);
 
   return rp(uri.href)
     .then(html => {
@@ -137,8 +153,11 @@ allLinks.push(startUrl);
 
 getLinks(startUrl)
   .then(() => {
-    //allVisited.forEach((r) => console.log(r.id + ': ' + r.href));
-    allLinks.forEach((r) => console.log(r.href));
+    if (onlyVisited) {
+      allVisited.forEach((r) => console.log(r.id + ': ' + r.href));
+    } else {
+      allLinks.forEach((r) => console.log(r.href));
+    }
   })
   .catch(err => console.log(err));
 
