@@ -9,7 +9,7 @@ const MAX_REQUESTS = 30;
 
 function usage() {
   console.log("USAGE: npm run exec -- <URL> [OPTION]...");
-  console.log("USAGE: node index.js <URL> [OPTION]...");
+  console.log("USAGE: node dist/index.js <URL> [OPTION]...");
   console.log("\n  OPTIONS: ");
   console.log("  --async: Run asynchronously");
   console.log("  --limit LIMIT: Specify Max number of total requests (Default " + MAX_REQUESTS + ")");
