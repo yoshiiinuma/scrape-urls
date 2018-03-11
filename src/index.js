@@ -15,10 +15,9 @@ function usage() {
   console.log("  --limit LIMIT: Specify Max number of total requests (Default " + MAX_REQUESTS + ")");
   console.log("  --visit: Print only visited");
   console.log("  --DEBUG: Print debug messages");
+  console.log("  -h or --help: Print this usage");
   console.log("");
 }
-
-console.log(process.argv);
 
 if (process.argv.length < 3) {
   usage();
@@ -33,7 +32,6 @@ var onlyVisited = false;
 var rootUrl;
 
 for (var i = 2; i < process.argv.length; i++) {
-  console.log(i + ': ' + process.argv[i]);
   if (process.argv[i] === '--async') {
     async = true;
   }
@@ -48,6 +46,10 @@ for (var i = 2; i < process.argv.length; i++) {
   }
   if (process.argv[i] === '--visit') {
     onlyVisited = true;
+  }
+  if (process.argv[i] === '-h' || process.argv[i] === '--help') {
+    usage();
+    process.exit();
   }
 }
 
