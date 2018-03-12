@@ -119,8 +119,7 @@ function extractLinks(arg) {
     externals: externals,
     absolutes: abs,
     relatives: rel,
-    anchors: anchors,
-    numOfNotVisited: i
+    anchors: anchors
   };
 }
 
