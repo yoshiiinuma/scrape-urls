@@ -14,6 +14,7 @@ function usage() {
   console.log("  --async: Run asynchronously");
   console.log("  --limit LIMIT: Specify Max number of total requests (Default " + MAX_REQUESTS + ")");
   console.log("  --visit: Print only visited");
+  console.log("  --skip KEYWORD: Skip links that containing the given KEYWORD; you can use --skip multiple times");
   console.log("  --DEBUG: Print debug messages");
   console.log("  -h or --help: Print this usage");
   console.log("");
@@ -29,6 +30,7 @@ var limit = MAX_REQUESTS;
 var async = false;
 var debug = false;
 var onlyVisited = false;
+var skipKeywords = [];
 var rootUrl;
 
 for (var i = 2; i < process.argv.length; i++) {
@@ -38,6 +40,13 @@ for (var i = 2; i < process.argv.length; i++) {
   if (process.argv[i] === '--limit') {
     if (process.argv[i+1]) {
       limit = Number(process.argv[i+1]);
+      i++;
+    }
+  }
+  if (process.argv[i] === '--skip') {
+    if (process.argv[i+1]) {
+      let word = process.argv[i+1];
+      skipKeywords.push(word);
       i++;
     }
   }
@@ -62,6 +71,11 @@ try {
 }
 
 const regexHost = new RegExp('^https?://' + rootUrl.host);
+const regexStaticFile = /\.(pdf|jpg|jpeg|gif|png|js|css|ico)$/i;
+var regexSkip = null;
+if (skipKeywords.length > 0) {
+  regexSkip = new RegExp('(' + skipKeywords.join('|') + ')', 'i');
+}
 
 var total = 1;
 var checked = {};
@@ -131,9 +145,17 @@ function getLinks(uri) {
   visited[uri.href] = true;
   if (debug) console.log('VISIT: ' + uri.id + ': ' + uri.href);
 
+  if (regexStaticFile.test(uri.href)) { return; }
+  if (regexSkip && regexSkip.test(uri.href)) {
+    console.log('SKIP: ' + uri.href);
+    return;
+  }
+
   return rp(uri.href)
     .then(html => {
       allVisited.push(uri);
+      if (regexStaticFile.test(uri.href)) { return; }
+
       let r = extractLinks({ uri: uri, html: html });
       if (r.links.length > 0) {
         if (async) {
@@ -145,7 +167,16 @@ function getLinks(uri) {
         }
       }
     })
-    .catch(err => console.log(err));
+    .catch(err => {
+      if (err.statusCode) {
+        console.log('ERROR: ' + err.statusCode + ' ' + uri.href);
+      } else if (err.name === 'RequestError') {
+        console.log(err.message + ': ' + uri.href);
+      } else {
+        console.log(err);
+        console.log(Object.keys(err));
+      }
+    });
 }
 
 
