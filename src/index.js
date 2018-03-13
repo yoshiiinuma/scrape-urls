@@ -34,29 +34,30 @@ var skipKeywords = [];
 var rootUrl;
 
 for (var i = 2; i < process.argv.length; i++) {
-  if (process.argv[i] === '--async') {
+  let arg = process.argv[i];
+  if (arg === '--async') {
     async = true;
   }
-  if (process.argv[i] === '--limit') {
+  if (arg === '--limit') {
     if (process.argv[i+1]) {
       limit = Number(process.argv[i+1]);
       i++;
     }
   }
-  if (process.argv[i] === '--skip') {
+  if (arg === '--skip') {
     if (process.argv[i+1]) {
       let word = process.argv[i+1];
       skipKeywords.push(word);
       i++;
     }
   }
-  if (process.argv[i] === '--DEBUG') {
+  if (arg === '--DEBUG') {
     debug = true;
   }
-  if (process.argv[i] === '--visit') {
+  if (arg === '--visit') {
     onlyVisited = true;
   }
-  if (process.argv[i] === '-h' || process.argv[i] === '--help') {
+  if (arg === '-h' || arg === '--help') {
     usage();
     process.exit();
   }
