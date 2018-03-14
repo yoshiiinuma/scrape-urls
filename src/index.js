@@ -186,7 +186,6 @@ function extractLinks(arg) {
 
 function getLinks(uri) {
   if (visited[uri.href]) return Promise.reject({ uri, error: 'Visited URL Given' }); 
-  //if (uri.id > limit) return;
 
   checked[uri.href] = true;
   visited[uri.href] = true;
