@@ -78,11 +78,21 @@ if (skipKeywords.length > 0) {
   regexSkip = new RegExp('(' + skipKeywords.join('|') + ')', 'i');
 }
 
-var total = 1;
+var cntLinks = 1;
+var cntVisited = 0;
+
 var checked = {};
 var visited = {};
 var allVisited = [];
-var allLinks = [];
+var allLinks = [];     // Hyperlinks
+var allAssets = [];    // Static Files: js, css, images
+
+function toAbsolute(link) {
+  if (!link) return link;
+  if (link.startsWith('http')) return link;
+  if (link.startsWith('/')) return rootUrl.origin + link;
+  return rootUrl.origin + '/' + link;
+}
 
 function extractLinks(arg) {
   let $ = cheerio.load(arg.html);
@@ -91,6 +101,9 @@ function extractLinks(arg) {
   let anchors = [];
   let abs = [];
   let rel = [];
+  let links = [];
+  let scripts = [];
+  let imgs = [];
 
   $('a').each((i, e) => {
     let l = $(e);
@@ -108,7 +121,7 @@ function extractLinks(arg) {
         let uri = rootUrl.origin + href;
         if (!checked[uri]) {
           checked[uri] = true;
-          let h = { href: uri, id: ++total };
+          let h = { href: uri, id: ++cntLinks };
           if (debug) console.log('>>> ' + h.id + ': ' + h.href);
           notVisited.push(h);
           allLinks.push(h);
@@ -118,7 +131,7 @@ function extractLinks(arg) {
           abs.push({ href: href, text: text });
           if (!checked[href]) {
             checked[href] = true;
-            let h = { href: href, id: ++total };
+            let h = { href: href, id: ++cntLinks };
             if (debug) console.log('>>> ' + h.id + ': ' + h.href);
             notVisited.push(h);
             allLinks.push(h);
@@ -127,6 +140,39 @@ function extractLinks(arg) {
           externals.push({ href: href, text: text });
         }
       }
+    }
+  })
+  $('link').each((i, e) => {
+    let l = $(e);
+    let href = toAbsolute(l.attr('href'));
+    if (href && !checked[href]) {
+      checked[href] = true;
+      let h = { href: href, id: ++cntLinks };
+      if (debug) console.log('>>> ' + h.id + ': ' + h.href);
+      links.push(h);
+      allAssets.push(h);
+    }
+  })
+  $('script').each((i, e) => {
+    let l = $(e);
+    let href = toAbsolute(l.attr('src'));
+    if (href && !checked[href]) {
+      checked[href] = true;
+      let h = { href: href, id: ++cntLinks };
+      if (debug) console.log('>>> ' + h.id + ': ' + h.href);
+      scripts.push(h);
+      allAssets.push(h);
+    }
+  })
+  $('img').each((i, e) => {
+    let l = $(e);
+    let href = toAbsolute(l.attr('src'));
+    if (href && !checked[href]) {
+      checked[href] = true;
+      let h = { href: href, id: ++cntLinks };
+      if (debug) console.log('>>> ' + h.id + ': ' + h.href);
+      imgs.push(h);
+      allAssets.push(h);
     }
   })
   return {
@@ -140,17 +186,23 @@ function extractLinks(arg) {
 
 function getLinks(uri) {
   if (visited[uri.href]) return Promise.reject({ uri, error: 'Visited URL Given' }); 
-  if (uri.id > limit) return;
+  //if (uri.id > limit) return;
 
   checked[uri.href] = true;
   visited[uri.href] = true;
-  if (debug) console.log('VISIT: ' + uri.id + ': ' + uri.href);
 
   if (regexStaticFile.test(uri.href)) { return; }
   if (regexSkip && regexSkip.test(uri.href)) {
     console.log('SKIP: ' + uri.href);
     return;
   }
+
+  cntVisited++;
+  if (cntVisited > limit) {
+    if (debug) console.log('LIMIT: ' + cntVisited + ' ID: ' + uri.id + ' ' + uri.href); 
+    return Promise.reject({ uri, name: 'LimitReached'});
+  }
+  if (debug) console.log('VISIT: ' + uri.id + ': ' + uri.href);
 
   return rp(uri.href)
     .then(html => {
@@ -173,6 +225,7 @@ function getLinks(uri) {
         console.log('ERROR: ' + err.statusCode + ' ' + uri.href);
       } else if (err.name === 'RequestError') {
         console.log(err.message + ': ' + uri.href);
+      } else if (err.name === 'LimitReached') {
       } else {
         console.log(err);
         console.log(Object.keys(err));
