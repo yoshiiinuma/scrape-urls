@@ -1,7 +1,7 @@
 
 class ScrapedLinks {
-  constructor(host, known = {}, debug = false) {
-    this.host = host;
+  constructor(url, known = {}, debug = false) {
+    this.url = url;
     this.known = known;
     this.debug = debug;
     this.count = 0;
@@ -14,7 +14,7 @@ class ScrapedLinks {
     this.resources = [];
     this.scripts = [];
     this.images = [];
-    this.regexHost = new RegExp('^https?://' + this.host);
+    this.regexHost = new RegExp('^https?://' + this.url.host);
   }
 
   getInternalLinks() {
@@ -56,9 +56,9 @@ class ScrapedLinks {
   toAbsolute(link) {
     if (!link) return link;
     if (link.startsWith('http')) return link;
-    if (link.startsWith('/')) return this.host + link;
-    if (link.startsWith('#')) return this.host + link;
-    if (link.startsWith('?')) return this.host + link;
+    if (link.startsWith('/')) return this.url.origin + link;
+    if (link.startsWith('#')) return this.url.origin + link;
+    if (link.startsWith('?')) return this.url.origin + link;
     return this.host + '/' + link;
   }
 
@@ -87,7 +87,7 @@ class ScrapedLinks {
     this.known[link] = true;
 
     if (link.startsWith('#')) {
-      console.log()
+      if (this.debug) console.log('  ANC >>> ' + this.count + ': ' + link);
       this.anchors.push(link);
     } else if (link.startsWith('/')) {
       this.count++;

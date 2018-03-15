@@ -98,7 +98,7 @@ function toAbsolute(link) {
 
 function scrapeLinks(arg) {
   let $ = cheerio.load(arg.html);
-  let r = new ScrapedLinks(arg.host, arg.known, arg.debug);
+  let r = new ScrapedLinks(arg.url, arg.known, arg.debug);
   let resources = [];
   let scripts = [];
   let images = [];
@@ -140,7 +140,10 @@ function crawl(uri) {
 
   visited[uri] = true;
 
-  if (regexStaticFile.test(uri)) { return; }
+  if (regexStaticFile.test(uri)) {
+    console.log('STATIC: ' + uri);
+    return;
+  }
   if (regexSkip && regexSkip.test(uri)) {
     console.log('SKIP: ' + uri);
     return;
@@ -160,7 +163,7 @@ function crawl(uri) {
     .then(html => {
       if (regexStaticFile.test(uri)) { return Promise.reject({ uri, name: 'SkipStatic' }); }
 
-      let r = scrapeLinks({ host: rootUrl.host, uri: uri, html: html, known: checked, debug: debug });
+      let r = scrapeLinks({ url: rootUrl, html: html, known: checked, debug: debug });
       let links = r.getInternalLinks();
       if (links.length == 0) return Promise.reject({ uri, name: 'NoNewLinkFound' });
       allLinks.concat(links);
