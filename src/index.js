@@ -1,11 +1,8 @@
 
-//var rp = require("request-promise");
-//var cheerio = require("cheerio");
 import rp from 'request-promise';
-import cheerio from 'cheerio';
 import { URL } from 'url';
 
-var ScrapedLinks = require('./scraped-links.js');
+import scraper from './scraper.js';
 
 const MAX_REQUESTS = 30;
 
@@ -80,46 +77,15 @@ if (skipKeywords.length > 0) {
 }
 
 var cntVisited = 0;
-
-var checked = {};
 var visited = {};
+var known = {};
 var allVisited = [];
-var allLinks = [];     // Hyperlinks
+var allLinks = [];
 
-function scrapeLinks(arg) {
-  let $ = cheerio.load(arg.html);
-  //let r = new ScrapedLinks(arg.url, arg.known, arg.callback, arg.debug);
-  let r = new ScrapedLinks(arg.url, arg.known, arg.all, arg.debug);
-  let resources = [];
-  let scripts = [];
-  let images = [];
+allLinks.push(original);
+known[original] = true;
 
-  $('a').each((i, e) => {
-    let l = $(e);
-    if (l && l.attr('href')) {
-      r.setLink(l.attr('href'));
-    }
-  })
-  $('link').each((i, e) => {
-    let l = $(e);
-    if (l && l.attr('href')) {
-      r.setResource(l.attr('href'));
-    }
-  })
-  $('script').each((i, e) => {
-    let l = $(e);
-    if (l && l.attr('src')) {
-      r.setScript(l.attr('src'));
-    }
-  })
-  $('img').each((i, e) => {
-    let l = $(e);
-    if (l && l.attr('src')) {
-      r.setImage(l.attr('src'));
-    }
-  })
-  return r;
-}
+var scrapeLinks = scraper(rootUrl, known, allLinks, debug);
 
 function crawl(uri) {
   if (!uri) return Promise.reject({ uri, error: 'No URL Given' });
@@ -140,20 +106,14 @@ function crawl(uri) {
   if (cntVisited > limit) {
     return Promise.reject({ uri, name: 'LimitReached' });
   }
-  if (debug) console.log('VISIT: ' + uri);
+  if (debug) console.log('VISIT: ' + cntVisited + ' ' + uri);
 
   return rp(uri)
     .then(html => {
       allVisited.push(uri);
       if (regexStaticFile.test(uri)) { return Promise.reject({ uri, name: 'SkipStatic' }); }
 
-      let r = scrapeLinks({
-        url: rootUrl,
-        html: html,
-        known: checked,
-        all: allLinks,
-        debug: debug,
-      });
+      let r = scrapeLinks(html);
       let links = r.getInternalLinks();
       if (links.length == 0) return Promise.reject({ uri, name: 'NoNewLinkFound' });
 
@@ -182,9 +142,6 @@ function crawl(uri) {
       }
     });
 }
-
-allLinks.push(original);
-checked[original] = true;
 
 crawl(original)
   .then(() => {
