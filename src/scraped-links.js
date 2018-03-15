@@ -4,7 +4,6 @@ class ScrapedLinks {
     this.url = url;
     this.known = known;
     this.all = all;
-    //this.callback = callback;
     this.debug = debug;
     this.count = 0;
 
@@ -97,7 +96,6 @@ class ScrapedLinks {
       link = this.toAbsolute(link);
       this.internals.push(link);
       this.all.push(link);
-      //if (this.callback) this.callback(link);
       this.known[link] = true;
       if (this.debug) console.log('  REL >>> ' + this.count + ': ' + link);
     } else {
@@ -106,7 +104,6 @@ class ScrapedLinks {
         this.absolute.push(link);
         this.internals.push(link);
         this.all.push(link);
-        //if (this.callback) this.callback(link);
         if (this.debug) console.log('  ABS >>> ' + this.count + ': ' + link);
       } else {
         if (this.debug) console.log('  EXT >>> ' + this.count + ': ' + link);
