@@ -35,12 +35,10 @@ export default (args) => {
     visited[uri] = true;
 
     if (regexStaticFile.test(uri)) {
-      if (debug) console.log('STATIC: ' + uri);
-      return;
+      return Promise.reject({ uri, name: 'SkipStatic' });
     }
     if (regexSkip && regexSkip.test(uri)) {
-      if (debug) console.log('SKIP: ' + uri);
-      return;
+      return Promise.reject({ uri, name: 'SkipKeyword' });
     }
 
     cntVisited++;
@@ -54,15 +52,13 @@ export default (args) => {
         allVisited.push(uri);
 
         if (regexStaticFile.test(uri)) {
-          if (debug) console.log('STATIC: ' + cntVisited + ' ' + uri);
-          return;
+          return Promise.reject({ uri, name: 'SkipStatic' });
         }
 
         let r = getLinks(html);
         let links = r.getInternalLinks();
         if (links.length == 0) {
-          if (debug) console.log('DONE: ' + cntVisited + ' ' + uri);
-          return;
+          return Promise.reject({ uri, name: 'NoMoreLinks' });
         }
 
         if (async) {
@@ -78,6 +74,13 @@ export default (args) => {
           console.log('ERROR: ' + err.statusCode + ' ' + uri);
         } else if (err.name === 'RequestError') {
           console.log(err.message + ': ' + uri);
+        } else if (err.name === 'LimitReached') {
+        } else if (err.name === 'SkipStatic') {
+          if (debug) console.log('STATIC: ' + cntVisited + ' ' + err.uri);
+        } else if (err.name === 'SkipKeyword') {
+          if (debug) console.log('SKIP: ' + err.uri);
+        } else if (err.name === 'NoMoreLinks') {
+          if (debug) console.log('DONE: ' + cntVisited + ' ' + err.uri);
         } else {
           console.log(err);
           console.log(Object.keys(err));
