@@ -36,16 +36,16 @@ export default (args) => {
 
     if (regexStaticFile.test(uri)) {
       if (debug) console.log('STATIC: ' + uri);
-      return Promise.resolve();
+      return;
     }
     if (regexSkip && regexSkip.test(uri)) {
       if (debug) console.log('SKIP: ' + uri);
-      return Promise.resolve();
+      return;
     }
 
     cntVisited++;
     if (cntVisited > limit) {
-      return Promise.resolve();
+      return;
     }
     if (debug) console.log('VISIT: ' + cntVisited + ' ' + uri);
 
@@ -55,14 +55,14 @@ export default (args) => {
 
         if (regexStaticFile.test(uri)) {
           if (debug) console.log('STATIC: ' + cntVisited + ' ' + uri);
-          return Promise.resolve();
+          return;
         }
 
         let r = getLinks(html);
         let links = r.getInternalLinks();
         if (links.length == 0) {
           if (debug) console.log('DONE: ' + cntVisited + ' ' + uri);
-          return Promise.resolve();
+          return;
         }
 
         if (async) {
@@ -76,10 +76,8 @@ export default (args) => {
       .catch(err => {
         if (err.statusCode) {
           console.log('ERROR: ' + err.statusCode + ' ' + uri);
-          return Promise.resolve();
         } else if (err.name === 'RequestError') {
           console.log(err.message + ': ' + uri);
-          return Promise.resolve();
         } else {
           console.log(err);
           console.log(Object.keys(err));
