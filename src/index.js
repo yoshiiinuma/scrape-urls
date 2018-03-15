@@ -88,7 +88,8 @@ var allLinks = [];     // Hyperlinks
 
 function scrapeLinks(arg) {
   let $ = cheerio.load(arg.html);
-  let r = new ScrapedLinks(arg.url, arg.known, arg.callback, arg.debug);
+  //let r = new ScrapedLinks(arg.url, arg.known, arg.callback, arg.debug);
+  let r = new ScrapedLinks(arg.url, arg.known, arg.all, arg.debug);
   let resources = [];
   let scripts = [];
   let images = [];
@@ -96,13 +97,13 @@ function scrapeLinks(arg) {
   $('a').each((i, e) => {
     let l = $(e);
     if (l && l.attr('href')) {
-      r.setLink(l.attr('href');
+      r.setLink(l.attr('href'));
     }
   })
   $('link').each((i, e) => {
     let l = $(e);
     if (l && l.attr('href')) {
-      r.setResource(href);
+      r.setResource(l.attr('href'));
     }
   })
   $('script').each((i, e) => {
@@ -153,10 +154,8 @@ function crawl(uri) {
         url: rootUrl,
         html: html,
         known: checked,
+        all: allLinks,
         debug: debug,
-        callback: (link) => {
-          allLinks.push(link)
-        }
       });
       let links = r.getInternalLinks();
       if (links.length == 0) return Promise.reject({ uri, name: 'NoNewLinkFound' });
