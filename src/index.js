@@ -87,7 +87,7 @@ known[original] = true;
 
 var scrapeLinks = scraper(rootUrl, known, allLinks, debug);
 
-function crawl(uri) {
+function crawl(uri, getLinks) {
   if (!uri) return Promise.reject({ uri, error: 'No URL Given' });
   if (visited[uri]) return Promise.reject({ uri, error: 'Visited URL Given' });
 
@@ -113,15 +113,15 @@ function crawl(uri) {
       allVisited.push(uri);
       if (regexStaticFile.test(uri)) { return Promise.reject({ uri, name: 'SkipStatic' }); }
 
-      let r = scrapeLinks(html);
+      let r = getLinks(html);
       let links = r.getInternalLinks();
       if (links.length == 0) return Promise.reject({ uri, name: 'NoNewLinkFound' });
 
       if (async) {
-        return Promise.all(links.map(crawl));
+        return Promise.all(links.map(l => crawl(l, getLinks)));
       } else {
         return links.reduce((promise, link) => {
-          return promise.then(() => crawl(link));
+          return promise.then(() => crawl(link, getLinks));
         }, Promise.resolve());
       }
     })
@@ -143,7 +143,7 @@ function crawl(uri) {
     });
 }
 
-crawl(original)
+crawl(original, scrapeLinks)
   .then(() => {
     if (onlyVisited) {
       allVisited.forEach((r) => console.log(r));
