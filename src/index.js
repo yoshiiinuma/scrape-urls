@@ -73,28 +73,18 @@ try {
   process.exit();
 }
 
-const regexHost = new RegExp('^https?://' + rootUrl.host);
 const regexStaticFile = /\.(pdf|jpg|jpeg|gif|png|js|css|ico|xml)(\?[^?]+)?$/i;
 var regexSkip = null;
 if (skipKeywords.length > 0) {
   regexSkip = new RegExp('(' + skipKeywords.join('|') + ')', 'i');
 }
 
-var cntLinks = 1;
 var cntVisited = 0;
 
 var checked = {};
 var visited = {};
 var allVisited = [];
 var allLinks = [];     // Hyperlinks
-var allAssets = [];    // Static Files: js, css, images
-
-function toAbsolute(link) {
-  if (!link) return link;
-  if (link.startsWith('http')) return link;
-  if (link.startsWith('/')) return rootUrl.origin + link;
-  return rootUrl.origin + '/' + link;
-}
 
 function scrapeLinks(arg) {
   let $ = cheerio.load(arg.html);
@@ -105,15 +95,12 @@ function scrapeLinks(arg) {
 
   $('a').each((i, e) => {
     let l = $(e);
-    let href = l.attr('href');
-
-    if (href) {
-      r.setLink(href);
+    if (l && l.attr('href')) {
+      r.setLink(l.attr('href');
     }
   })
   $('link').each((i, e) => {
     let l = $(e);
-    let href = toAbsolute(l.attr('href'));
     if (l && l.attr('href')) {
       r.setResource(href);
     }
