@@ -98,7 +98,7 @@ function toAbsolute(link) {
 
 function scrapeLinks(arg) {
   let $ = cheerio.load(arg.html);
-  let r = new ScrapedLinks(arg.url, arg.known, arg.debug);
+  let r = new ScrapedLinks(arg.url, arg.known, arg.callback, arg.debug);
   let resources = [];
   let scripts = [];
   let images = [];
@@ -106,7 +106,6 @@ function scrapeLinks(arg) {
   $('a').each((i, e) => {
     let l = $(e);
     let href = l.attr('href');
-    //let text = l.text().replace(/[\t\n]/g, '').replace(/^ +/, '').replace(/ +$/, '');
 
     if (href) {
       r.setLink(href);
@@ -141,7 +140,7 @@ function crawl(uri) {
   visited[uri] = true;
 
   if (regexStaticFile.test(uri)) {
-    console.log('STATIC: ' + uri);
+    if (debug) console.log('STATIC: ' + uri);
     return;
   }
   if (regexSkip && regexSkip.test(uri)) {
@@ -163,10 +162,17 @@ function crawl(uri) {
     .then(html => {
       if (regexStaticFile.test(uri)) { return Promise.reject({ uri, name: 'SkipStatic' }); }
 
-      let r = scrapeLinks({ url: rootUrl, html: html, known: checked, debug: debug });
+      let r = scrapeLinks({
+        url: rootUrl,
+        html: html,
+        known: checked,
+        debug: debug,
+        callback: (link) => {
+          allLinks.push(link)
+        }
+      });
       let links = r.getInternalLinks();
       if (links.length == 0) return Promise.reject({ uri, name: 'NoNewLinkFound' });
-      allLinks.concat(links);
       return links;
     })
     .then(links => {
@@ -201,7 +207,6 @@ checked[original] = true;
 
 crawl(original)
   .then(() => {
-    console.log('-----------------------------------------');
     if (onlyVisited) {
       allVisited.forEach((r) => console.log(r));
     } else {
