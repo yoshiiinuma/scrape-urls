@@ -54,14 +54,14 @@ export default (args) => {
         allVisited.push(uri);
 
         if (regexStaticFile.test(uri)) {
-          if (debug) console.log('STATIC: ' + cntVisited + ' ' + err.uri);
+          if (debug) console.log('STATIC: ' + cntVisited + ' ' + uri);
           return Promise.resolve();
         }
 
         let r = getLinks(html);
         let links = r.getInternalLinks();
         if (links.length == 0) {
-          if (debug) console.log('DONE: ' + cntVisited + ' ' + err.uri);
+          if (debug) console.log('DONE: ' + cntVisited + ' ' + uri);
           return Promise.resolve();
         }
 
