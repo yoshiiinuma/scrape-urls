@@ -5,6 +5,8 @@ import rp from 'request-promise';
 import cheerio from 'cheerio';
 import { URL } from 'url';
 
+var ScrapedLinks = require('./scraped-links.js');
+
 const MAX_REQUESTS = 30;
 
 function usage() {
@@ -72,7 +74,7 @@ try {
 }
 
 const regexHost = new RegExp('^https?://' + rootUrl.host);
-const regexStaticFile = /\.(pdf|jpg|jpeg|gif|png|js|css|ico)$/i;
+const regexStaticFile = /\.(pdf|jpg|jpeg|gif|png|js|css|ico|xml)(\?[^?]+)?$/i;
 var regexSkip = null;
 if (skipKeywords.length > 0) {
   regexSkip = new RegExp('(' + skipKeywords.join('|') + ')', 'i');
@@ -93,6 +95,104 @@ function toAbsolute(link) {
   if (link.startsWith('/')) return rootUrl.origin + link;
   return rootUrl.origin + '/' + link;
 }
+
+function scrapeLinks(arg) {
+  let $ = cheerio.load(arg.html);
+  let r = new ScrapedLinks(arg.host, arg.known, arg.debug);
+  let resources = [];
+  let scripts = [];
+  let images = [];
+
+  $('a').each((i, e) => {
+    let l = $(e);
+    let href = l.attr('href');
+    //let text = l.text().replace(/[\t\n]/g, '').replace(/^ +/, '').replace(/ +$/, '');
+
+    if (href) {
+      r.setLink(href);
+    }
+  })
+  $('link').each((i, e) => {
+    let l = $(e);
+    let href = toAbsolute(l.attr('href'));
+    if (l && l.attr('href')) {
+      r.setResource(href);
+    }
+  })
+  $('script').each((i, e) => {
+    let l = $(e);
+    if (l && l.attr('src')) {
+      r.setScript(l.attr('src'));
+    }
+  })
+  $('img').each((i, e) => {
+    let l = $(e);
+    if (l && l.attr('src')) {
+      r.setImage(l.attr('src'));
+    }
+  })
+  return r;
+}
+
+function crawl(uri) {
+  if (!uri) return Promise.reject({ uri, error: 'No URL Given' });
+  if (visited[uri]) return Promise.reject({ uri, error: 'Visited URL Given' });
+
+  visited[uri] = true;
+
+  if (regexStaticFile.test(uri)) { return; }
+  if (regexSkip && regexSkip.test(uri)) {
+    console.log('SKIP: ' + uri);
+    return;
+  }
+
+  cntVisited++;
+  if (cntVisited > limit) {
+    return Promise.reject({ uri, name: 'LimitReached' });
+  }
+  if (debug) console.log('VISIT: ' + uri);
+
+  return rp(uri)
+    .then(html => {
+      allVisited.push(uri);
+      return html;
+    })
+    .then(html => {
+      if (regexStaticFile.test(uri)) { return Promise.reject({ uri, name: 'SkipStatic' }); }
+
+      let r = scrapeLinks({ host: rootUrl.host, uri: uri, html: html, known: checked, debug: debug });
+      let links = r.getInternalLinks();
+      if (links.length == 0) return Promise.reject({ uri, name: 'NoNewLinkFound' });
+      allLinks.concat(links);
+      return links;
+    })
+    .then(links => {
+      if (async) {
+        return Promise.all(links.map(crawl));
+      } else {
+        return links.reduce((promise, link) => {
+          return promise.then(() => crawl(link));
+        }, Promise.resolve());
+      }
+    })
+    .catch(err => {
+      if (err.statusCode) {
+        console.log('ERROR: ' + err.statusCode + ' ' + uri);
+      } else if (err.name === 'RequestError') {
+        console.log(err.message + ': ' + uri);
+      } else if (err.name === 'LimitReached') {
+        if (debug) console.log('LIMIT: ' + cntVisited + ' ' + err.uri);
+      } else if (err.name === 'SkipStatic') {
+        if (debug) console.log('STATIC: ' + cntVisited + ' ' + err.uri);
+      } else if (err.name === 'NoNewLinkFound') {
+        if (debug) console.log('DONE: ' + cntVisited + ' ' + err.uri);
+      } else {
+        console.log(err);
+        console.log(Object.keys(err));
+      }
+    });
+}
+
 
 function extractLinks(arg) {
   let $ = cheerio.load(arg.html);
@@ -185,7 +285,7 @@ function extractLinks(arg) {
 }
 
 function getLinks(uri) {
-  if (visited[uri.href]) return Promise.reject({ uri, error: 'Visited URL Given' }); 
+  if (visited[uri.href]) return Promise.reject({ uri, error: 'Visited URL Given' });
 
   checked[uri.href] = true;
   visited[uri.href] = true;
@@ -198,7 +298,7 @@ function getLinks(uri) {
 
   cntVisited++;
   if (cntVisited > limit) {
-    if (debug) console.log('LIMIT: ' + cntVisited + ' ID: ' + uri.id + ' ' + uri.href); 
+    if (debug) console.log('LIMIT: ' + cntVisited + ' ID: ' + uri.id + ' ' + uri.href);
     return Promise.reject({ uri, name: 'LimitReached'});
   }
   if (debug) console.log('VISIT: ' + uri.id + ': ' + uri.href);
@@ -233,15 +333,29 @@ function getLinks(uri) {
 }
 
 
-var startUrl = { href: original, id: 1 };
-allLinks.push(startUrl);
+//var startUrl = { href: original, id: 1 };
+//allLinks.push(startUrl);
 
-getLinks(startUrl)
+//getLinks(startUrl)
+//  .then(() => {
+//    if (onlyVisited) {
+//      allVisited.forEach((r) => console.log(r.id + ': ' + r.href));
+//    } else {
+//      allLinks.forEach((r) => console.log(r.href));
+//    }
+//  })
+//  .catch(err => console.log(err));
+
+allLinks.push(original);
+checked[original] = true;
+
+crawl(original)
   .then(() => {
+    console.log('-----------------------------------------');
     if (onlyVisited) {
-      allVisited.forEach((r) => console.log(r.id + ': ' + r.href));
+      allVisited.forEach((r) => console.log(r));
     } else {
-      allLinks.forEach((r) => console.log(r.href));
+      allLinks.forEach((r) => console.log(r));
     }
   })
   .catch(err => console.log(err));
