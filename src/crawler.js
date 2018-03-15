@@ -35,14 +35,17 @@ export default (args) => {
     visited[uri] = true;
 
     if (regexStaticFile.test(uri)) {
-      return Promise.reject({ uri, name: 'SkipStatic' });
+      if (debug) console.log('STATIC: ' + cntVisited + ' ' + uri);
+      return;
     }
     if (regexSkip && regexSkip.test(uri)) {
-      return Promise.reject({ uri, name: 'SkipKeyword' });
+      if (debug) console.log('SKIP: ' + uri);
+      return;
     }
 
     cntVisited++;
     if (cntVisited > limit) {
+      if (debug) console.log('LIMIT: ' + cntVisited + ' ' + uri);
       return;
     }
     if (debug) console.log('VISIT: ' + cntVisited + ' ' + uri);
@@ -51,14 +54,15 @@ export default (args) => {
       .then(html => {
         allVisited.push(uri);
 
-        if (regexStaticFile.test(uri)) {
-          return Promise.reject({ uri, name: 'SkipStatic' });
-        }
+        //if (regexStaticFile.test(uri)) {
+        //  return Promise.reject({ uri, name: 'SkipStatic' });
+        //}
 
         let r = getLinks(html);
         let links = r.getInternalLinks();
         if (links.length == 0) {
-          return Promise.reject({ uri, name: 'NoMoreLinks' });
+          if (debug) console.log('DONE: ' + cntVisited + ' ' + uri);
+          return;
         }
 
         if (async) {
@@ -74,16 +78,10 @@ export default (args) => {
           console.log('ERROR: ' + err.statusCode + ' ' + uri);
         } else if (err.name === 'RequestError') {
           console.log(err.message + ': ' + uri);
-        } else if (err.name === 'LimitReached') {
-        } else if (err.name === 'SkipStatic') {
-          if (debug) console.log('STATIC: ' + cntVisited + ' ' + err.uri);
-        } else if (err.name === 'SkipKeyword') {
-          if (debug) console.log('SKIP: ' + err.uri);
-        } else if (err.name === 'NoMoreLinks') {
-          if (debug) console.log('DONE: ' + cntVisited + ' ' + err.uri);
         } else {
           console.log(err);
           console.log(Object.keys(err));
+          return Promise.reject(err);
         }
       });
   };
