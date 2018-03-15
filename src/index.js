@@ -80,7 +80,7 @@ known[original] = true;
 
 var scrapeLinks = scraper(rootUrl, known, allLinks, debug);
 
-var crawl = crawler({ all: allVisited, getLinks: scrapeLinks, limit, async, debug });
+var crawl = crawler({ all: allVisited, getLinks: scrapeLinks, limit, async, skipKeywords, debug });
 
 crawl(original)
   .then(() => {
