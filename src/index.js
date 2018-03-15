@@ -3,6 +3,7 @@ import rp from 'request-promise';
 import { URL } from 'url';
 
 import scraper from './scraper.js';
+import crawler from './crawler.js';
 
 const MAX_REQUESTS = 30;
 
@@ -70,14 +71,6 @@ try {
   process.exit();
 }
 
-const regexStaticFile = /\.(pdf|jpg|jpeg|gif|png|js|css|ico|xml)(\?[^?]+)?$/i;
-var regexSkip = null;
-if (skipKeywords.length > 0) {
-  regexSkip = new RegExp('(' + skipKeywords.join('|') + ')', 'i');
-}
-
-var cntVisited = 0;
-var visited = {};
 var known = {};
 var allVisited = [];
 var allLinks = [];
@@ -87,63 +80,9 @@ known[original] = true;
 
 var scrapeLinks = scraper(rootUrl, known, allLinks, debug);
 
-function crawl(uri, getLinks) {
-  if (!uri) return Promise.reject({ uri, error: 'No URL Given' });
-  if (visited[uri]) return Promise.reject({ uri, error: 'Visited URL Given' });
+var crawl = crawler({ all: allVisited, getLinks: scrapeLinks, limit, async, debug });
 
-  visited[uri] = true;
-
-  if (regexStaticFile.test(uri)) {
-    if (debug) console.log('STATIC: ' + uri);
-    return;
-  }
-  if (regexSkip && regexSkip.test(uri)) {
-    console.log('SKIP: ' + uri);
-    return;
-  }
-
-  cntVisited++;
-  if (cntVisited > limit) {
-    return Promise.reject({ uri, name: 'LimitReached' });
-  }
-  if (debug) console.log('VISIT: ' + cntVisited + ' ' + uri);
-
-  return rp(uri)
-    .then(html => {
-      allVisited.push(uri);
-      if (regexStaticFile.test(uri)) { return Promise.reject({ uri, name: 'SkipStatic' }); }
-
-      let r = getLinks(html);
-      let links = r.getInternalLinks();
-      if (links.length == 0) return Promise.reject({ uri, name: 'NoNewLinkFound' });
-
-      if (async) {
-        return Promise.all(links.map(l => crawl(l, getLinks)));
-      } else {
-        return links.reduce((promise, link) => {
-          return promise.then(() => crawl(link, getLinks));
-        }, Promise.resolve());
-      }
-    })
-    .catch(err => {
-      if (err.statusCode) {
-        console.log('ERROR: ' + err.statusCode + ' ' + uri);
-      } else if (err.name === 'RequestError') {
-        console.log(err.message + ': ' + uri);
-      } else if (err.name === 'LimitReached') {
-        if (debug) console.log('LIMIT: ' + cntVisited + ' ' + err.uri);
-      } else if (err.name === 'SkipStatic') {
-        if (debug) console.log('STATIC: ' + cntVisited + ' ' + err.uri);
-      } else if (err.name === 'NoNewLinkFound') {
-        if (debug) console.log('DONE: ' + cntVisited + ' ' + err.uri);
-      } else {
-        console.log(err);
-        console.log(Object.keys(err));
-      }
-    });
-}
-
-crawl(original, scrapeLinks)
+crawl(original)
   .then(() => {
     if (onlyVisited) {
       allVisited.forEach((r) => console.log(r));

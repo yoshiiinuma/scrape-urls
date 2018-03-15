@@ -2,7 +2,7 @@
 import cheerio from 'cheerio';
 import ScrapedLinks from './scraped-links.js';
 
-export default function(originalURL, knownLinks = {}, allLinks = [], debug = false) {
+export default (originalURL, knownLinks = {}, allLinks = [], debug = false) => {
   var url = originalURL;
   var known = knownLinks;
   var all = allLinks; 
