@@ -145,9 +145,6 @@ function crawl(uri) {
   return rp(uri)
     .then(html => {
       allVisited.push(uri);
-      return html;
-    })
-    .then(html => {
       if (regexStaticFile.test(uri)) { return Promise.reject({ uri, name: 'SkipStatic' }); }
 
       let r = scrapeLinks({
@@ -159,9 +156,7 @@ function crawl(uri) {
       });
       let links = r.getInternalLinks();
       if (links.length == 0) return Promise.reject({ uri, name: 'NoNewLinkFound' });
-      return links;
-    })
-    .then(links => {
+
       if (async) {
         return Promise.all(links.map(crawl));
       } else {
