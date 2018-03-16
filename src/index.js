@@ -72,9 +72,9 @@ try {
 }
 
 var allVisited = [];
-var allLinks = [];
+var allFound = [];
 
-var scrapeLinks = scraper({ rootUrl, allLinks, debug });
+var scrapeLinks = scraper({ rootUrl, allFound, debug });
 
 var crawl = crawler({ all: allVisited, getLinks: scrapeLinks, limit, async, skipKeywords, debug });
 
@@ -83,7 +83,7 @@ crawl(original)
     if (onlyVisited) {
       allVisited.forEach((r) => console.log(r));
     } else {
-      allLinks.forEach((r) => console.log(r));
+      allFound.forEach((r) => console.log(r));
     }
   })
   .catch(err => console.log(err));

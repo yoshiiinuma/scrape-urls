@@ -1,9 +1,9 @@
 
 class ScrapedLinks {
-  constructor(url, known = {}, all = [], debug = false) {
+  constructor(url, known = {}, allFound = [], debug = false) {
     this.url = url;
     this.known = known;
-    this.all = all;
+    this.allFound = allFound;
     this.debug = debug;
     this.count = 0;
 
@@ -95,7 +95,7 @@ class ScrapedLinks {
       this.relative.push(link);
       link = this.toAbsolute(link);
       this.internals.push(link);
-      this.all.push(link);
+      this.allFound.push(link);
       this.known[link] = true;
       if (this.debug) console.log('    REL >>> ' + this.count + ': ' + link);
     } else {
@@ -103,7 +103,7 @@ class ScrapedLinks {
         this.count++;
         this.absolute.push(link);
         this.internals.push(link);
-        this.all.push(link);
+        this.allFound.push(link);
         if (this.debug) console.log('    ABS >>> ' + this.count + ': ' + link);
       } else {
         if (this.debug) console.log('    EXT >>> ' + this.count + ': ' + link);

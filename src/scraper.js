@@ -6,17 +6,16 @@ export default (args) => {
   const regexLinkType = /(stylesheet|icon|shortcut icon)/;
   var rootUrl = args.rootUrl;
   var known = {};
-  var allLinks = args.allLinks; 
+  var allFound = args.allFound; 
   var debug = args.debug;
-
 
   let startUrl = rootUrl.href.replace(/\/$/, '');
   known[startUrl] = true;
-  allLinks.push(startUrl);
+  allFound.push(startUrl);
 
   return (html) => {
     let $ = cheerio.load(html);
-    let r = new ScrapedLinks(rootUrl, known, allLinks, debug);
+    let r = new ScrapedLinks(rootUrl, known, allFound, debug);
     let resources = [];
     let scripts = [];
     let images = [];
