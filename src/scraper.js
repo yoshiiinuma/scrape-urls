@@ -12,6 +12,8 @@ export default (args) => {
   known[startUrl] = true;
   allLinks.push(startUrl);
 
+  var regexLinkType = /(stylesheet|icon|shortcut icon)/;
+
   return (html) => {
     let $ = cheerio.load(html);
     let r = new ScrapedLinks(rootUrl, known, allLinks, debug);
@@ -28,7 +30,10 @@ export default (args) => {
     $('link').each((i, e) => {
       let l = $(e);
       if (l && l.attr('href')) {
-        r.setResource(l.attr('href'));
+        let rel = l.attr('rel');
+        if (regexLinkType.test(rel)) {
+          r.setResource(l.attr('href'));
+        }
       }
     })
     $('script').each((i, e) => {
