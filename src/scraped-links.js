@@ -1,10 +1,12 @@
 
 class ScrapedLinks {
-  constructor(url, known = {}, allFound = [], debug = false) {
-    this.url = url;
-    this.known = known;
-    this.allFound = allFound;
-    this.debug = debug;
+
+  constructor(args) {
+    this.baseUrl = args.baseUrl;
+    this.known = args.known || {};
+    this.allFound = args.allFound || [];
+    this.debug = args.debug || false;
+    this.noQueries = args.noQueries || true; 
     this.count = 0;
 
     this.internals = [];
@@ -15,7 +17,7 @@ class ScrapedLinks {
     this.resources = [];
     this.scripts = [];
     this.images = [];
-    this.regexHost = new RegExp('^https?://' + this.url.host);
+    this.regexHost = new RegExp('^https?://' + this.baseUrl.host);
     this.regexPath = /^https?:\/\/.+\//;
   }
 
@@ -61,7 +63,7 @@ class ScrapedLinks {
 
   //Delete everything after '?'
   removeQueries(link) {
-    return link.replace(/?[^?]+$/, '');
+    return link.replace(/\?[^\?]+$/, '');
   }
 
   //Delete everything after the last '/'
@@ -70,13 +72,21 @@ class ScrapedLinks {
     return link.replace(/\/[^\/]+$/, '/');
   }
 
+  normalize(link) {
+    link = this.removeFragment(link);
+    if (this.noQueries) {
+      link = this.removeQueries(link);
+    }
+    return link;
+  }
+
   toAbsolute(link, curUrl) {
     let urlPrefix = this.removeFilename(curUrl);
 
     if (!link) return link;
     if (link.startsWith('http')) return link;
-    if (link.startsWith('//')) return this.url.protocol + link;
-    if (link.startsWith('/')) return this.url.origin + link;
+    if (link.startsWith('//')) return this.baseUrl.protocol + link;
+    if (link.startsWith('/')) return this.baseUrl.origin + link;
     if (link.startsWith('#')) return urlPrefix + link;
     if (link.startsWith('?')) return urlPrefix + link;
     if (link.startsWith('../')) {
@@ -86,13 +96,13 @@ class ScrapedLinks {
         urlPrefix = this.removeFilename(urlPrefix.replace(/\/$/, ''));
       }
       console.log('#### REL2ABS AAA: ' + curUrl + ' + ' + link + ' ==> ' + urlPrefix + path);
-      throw 'ScrapedLinks#toAbsolute Check it out!!!';
+      throw new Error('ScrapedLinks#toAbsolute Check it out!!!');
       return urlPrefix + path;
     }
     if (link.startsWith('./')) {
       let path = link.replace('./', '');
       console.log('#### REL2ABS BBB: ' + curUrl + ' + ' + link + ' ==> ' + urlPrefix + path);
-      throw 'ScrapedLinks#toAbsolute Check it out!!!';
+      throw new Error('ScrapedLinks#toAbsolute Check it out!!!');
       return urlPrefix + path;
     }
     return urlPrefix + '/' + link;
@@ -117,7 +127,7 @@ class ScrapedLinks {
     if (!link) return null;
 
     if (!link.startsWith('#')) {
-      link = link.replace(/#[^#]+$/, ''); //Remove fragments
+      link = this.normalize(link);
     }
     if (this.known[link]) return null;
     this.known[link] = true;

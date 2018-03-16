@@ -30,7 +30,8 @@ export default (args) => {
 
   const crawl = (uri) => {
     if (!uri) return Promise.reject({ uri, error: 'No URL Given' });
-    if (visited[uri]) return Promise.reject({ uri, error: 'Visited URL Given' });
+    //if (visited[uri]) return Promise.reject({ uri, error: 'Visited URL Given' });
+    if (visited[uri]) return;
 
     visited[uri] = true;
 

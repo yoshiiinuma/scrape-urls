@@ -4,18 +4,18 @@ import ScrapedLinks from './scraped-links.js';
 
 export default (args) => {
   const regexLinkType = /(stylesheet|icon|shortcut icon)/;
-  var rootUrl = args.rootUrl;
+  var baseUrl = args.rootUrl;
   var known = {};
   var allFound = args.allFound; 
   var debug = args.debug;
 
-  let startUrl = rootUrl.href.replace(/\/$/, '');
+  let startUrl = baseUrl.href.replace(/\/$/, '');
   known[startUrl] = true;
   allFound.push(startUrl);
 
   return (html, url) => {
     let $ = cheerio.load(html);
-    let r = new ScrapedLinks(rootUrl, known, allFound, debug);
+    let r = new ScrapedLinks({ baseUrl, known, allFound, debug });
     let resources = [];
     let scripts = [];
     let images = [];
