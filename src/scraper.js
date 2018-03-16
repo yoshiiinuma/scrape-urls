@@ -2,15 +2,19 @@
 import cheerio from 'cheerio';
 import ScrapedLinks from './scraped-links.js';
 
-export default (originalURL, knownLinks = {}, allLinks = [], debug = false) => {
-  var url = originalURL;
-  var known = knownLinks;
-  var all = allLinks; 
-  var dbg = debug;
+export default (args) => {
+  var rootUrl = args.rootUrl;
+  var known = {};
+  var allLinks = args.allLinks; 
+  var debug = args.debug;
+
+  let startUrl = rootUrl.href.replace(/\/$/, '');
+  known[startUrl] = true;
+  allLinks.push(startUrl);
 
   return (html) => {
     let $ = cheerio.load(html);
-    let r = new ScrapedLinks(url, known, all, dbg);
+    let r = new ScrapedLinks(rootUrl, known, allLinks, debug);
     let resources = [];
     let scripts = [];
     let images = [];

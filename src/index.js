@@ -71,14 +71,10 @@ try {
   process.exit();
 }
 
-var known = {};
 var allVisited = [];
 var allLinks = [];
 
-allLinks.push(original);
-known[original] = true;
-
-var scrapeLinks = scraper(rootUrl, known, allLinks, debug);
+var scrapeLinks = scraper({ rootUrl, allLinks, debug });
 
 var crawl = crawler({ all: allVisited, getLinks: scrapeLinks, limit, async, skipKeywords, debug });
 
