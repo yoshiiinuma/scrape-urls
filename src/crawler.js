@@ -35,17 +35,17 @@ export default (args) => {
     visited[uri] = true;
 
     if (regexStaticFile.test(uri)) {
-      if (debug) console.log('STATIC: ' + cntVisited + ' ' + uri);
+      if (debug) console.log('  STATIC: ' + cntVisited + ' ' + uri);
       return;
     }
     if (regexSkip && regexSkip.test(uri)) {
-      if (debug) console.log('SKIP: ' + uri);
+      if (debug) console.log('  SKIP: ' + uri);
       return;
     }
 
     cntVisited++;
     if (cntVisited > limit) {
-      if (debug) console.log('LIMIT: ' + cntVisited + ' ' + uri);
+      if (debug) console.log('  LIMIT: ' + cntVisited + ' ' + uri);
       return;
     }
     if (debug) console.log('VISIT: ' + cntVisited + ' ' + uri);
@@ -61,7 +61,7 @@ export default (args) => {
         let r = getLinks(html);
         let links = r.getInternalLinks();
         if (links.length == 0) {
-          if (debug) console.log('DONE: ' + cntVisited + ' ' + uri);
+          if (debug) console.log('  DONE: ' + cntVisited + ' ' + uri);
           return;
         }
 
@@ -76,6 +76,9 @@ export default (args) => {
       .catch(err => {
         if (err.statusCode) {
           console.log('ERROR: ' + err.statusCode + ' ' + uri);
+          if (err.statusCode >= 500) {
+            return Promise.reject(err);
+          }
         } else if (err.name === 'RequestError') {
           console.log(err.message + ': ' + uri);
         } else {

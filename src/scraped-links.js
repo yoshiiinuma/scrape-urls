@@ -88,7 +88,7 @@ class ScrapedLinks {
     this.known[link] = true;
 
     if (link.startsWith('#')) {
-      if (this.debug) console.log('  ANC >>> ' + this.count + ': ' + link);
+      if (this.debug) console.log('    ANC >>> ' + this.count + ': ' + link);
       this.anchors.push(link);
     } else if (link.startsWith('/')) {
       this.count++;
@@ -97,16 +97,16 @@ class ScrapedLinks {
       this.internals.push(link);
       this.all.push(link);
       this.known[link] = true;
-      if (this.debug) console.log('  REL >>> ' + this.count + ': ' + link);
+      if (this.debug) console.log('    REL >>> ' + this.count + ': ' + link);
     } else {
       if (this.regexHost.test(link)) {
         this.count++;
         this.absolute.push(link);
         this.internals.push(link);
         this.all.push(link);
-        if (this.debug) console.log('  ABS >>> ' + this.count + ': ' + link);
+        if (this.debug) console.log('    ABS >>> ' + this.count + ': ' + link);
       } else {
-        if (this.debug) console.log('  EXT >>> ' + this.count + ': ' + link);
+        if (this.debug) console.log('    EXT >>> ' + this.count + ': ' + link);
         this.externals.push(link);
       }
     }
