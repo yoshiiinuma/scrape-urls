@@ -3,7 +3,7 @@ import rp from 'request-promise';
 
 /**
  * Arguments:
- * 
+ *
  *   all: array to keep track of links that were extracted from visited pages
  *   getLinks: function to extract links from a page
  *   limit: the max number of pages to visit
@@ -12,7 +12,7 @@ import rp from 'request-promise';
  *
  */
 export default (args) => {
-  var limit = args.limit || 30; 
+  var limit = args.limit || 30;
   var async = args.async || false;
   var allVisited = args.all;
   var getLinks = args.getLinks;

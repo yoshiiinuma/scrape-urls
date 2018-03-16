@@ -15,6 +15,7 @@ function usage() {
   console.log("  --limit LIMIT: Specify Max number of total requests (Default " + MAX_REQUESTS + ")");
   console.log("  --visit: Print only visited");
   console.log("  --skip KEYWORD: Skip links that containing the given KEYWORD; you can use --skip multiple times");
+  console.log("  --no-query: Remove query parameters from the extracted URLs");
   console.log("  --DEBUG: Print debug messages");
   console.log("  -h or --help: Print this usage");
   console.log("");
@@ -31,6 +32,7 @@ var limit = MAX_REQUESTS;
 var async = false;
 var debug = false;
 var onlyVisited = false;
+var noQueries = false;
 var skipKeywords = [];
 var baseUrl;
 
@@ -55,6 +57,9 @@ for (var i = 2; i < process.argv.length; i++) {
   if (arg === '--DEBUG') {
     debug = true;
   }
+  if (arg === '--no-query') {
+    noQueries = true;
+  }
   if (arg === '--visit') {
     onlyVisited = true;
   }
@@ -75,7 +80,7 @@ try {
 var allVisited = [];
 var allFound = [];
 
-var scrapeLinks = scraper({ baseUrl, allFound, debug });
+var scrapeLinks = scraper({ baseUrl, allFound, debug, noQueries });
 
 var crawl = crawler({ all: allVisited, getLinks: scrapeLinks, limit, async, skipKeywords, debug });
 

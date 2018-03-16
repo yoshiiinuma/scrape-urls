@@ -5,8 +5,8 @@ class ScrapedLinks {
     this.baseUrl = args.baseUrl;
     this.known = args.known || {};
     this.allFound = args.allFound || [];
-    this.debug = args.debug || false;
-    this.noQueries = args.noQueries || true; 
+    this.debug = ('debug' in args) ? args.debug : false;
+    this.noQueries = ('noQueries' in args) ? args.noQueries : true;
     this.count = 0;
 
     this.internals = [];
