@@ -25,7 +25,8 @@ if (process.argv.length < 3) {
   process.exit();
 }
 
-var original = process.argv[2].replace(/\/$/, '');
+//var original = process.argv[2].replace(/\/$/, '');
+var original = process.argv[2];
 var limit = MAX_REQUESTS;
 var async = false;
 var debug = false;

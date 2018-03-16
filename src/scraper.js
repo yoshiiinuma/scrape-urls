@@ -13,7 +13,7 @@ export default (args) => {
   known[startUrl] = true;
   allFound.push(startUrl);
 
-  return (html) => {
+  return (html, url) => {
     let $ = cheerio.load(html);
     let r = new ScrapedLinks(rootUrl, known, allFound, debug);
     let resources = [];
@@ -23,7 +23,7 @@ export default (args) => {
     $('a').each((i, e) => {
       let l = $(e);
       if (l && l.attr('href')) {
-        r.setLink(l.attr('href'));
+        r.setLink(l.attr('href'), url);
       }
     })
     $('link').each((i, e) => {
@@ -31,20 +31,20 @@ export default (args) => {
       if (l && l.attr('href')) {
         let rel = l.attr('rel');
         if (regexLinkType.test(rel)) {
-          r.setResource(l.attr('href'));
+          r.setResource(l.attr('href'), url);
         }
       }
     })
     $('script').each((i, e) => {
       let l = $(e);
       if (l && l.attr('src')) {
-        r.setScript(l.attr('src'));
+        r.setScript(l.attr('src'), url);
       }
     })
     $('img').each((i, e) => {
       let l = $(e);
       if (l && l.attr('src')) {
-        r.setImage(l.attr('src'));
+        r.setImage(l.attr('src'), url);
       }
     })
     return r;
