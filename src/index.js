@@ -32,7 +32,7 @@ var async = false;
 var debug = false;
 var onlyVisited = false;
 var skipKeywords = [];
-var rootUrl;
+var baseUrl;
 
 for (var i = 2; i < process.argv.length; i++) {
   let arg = process.argv[i];
@@ -65,7 +65,7 @@ for (var i = 2; i < process.argv.length; i++) {
 }
 
 try {
-  rootUrl = new URL(original);
+  baseUrl = new URL(original);
 } catch (err) {
   console.log('Invalid URL: ' + original);
   usage();
@@ -75,7 +75,7 @@ try {
 var allVisited = [];
 var allFound = [];
 
-var scrapeLinks = scraper({ rootUrl, allFound, debug });
+var scrapeLinks = scraper({ baseUrl, allFound, debug });
 
 var crawl = crawler({ all: allVisited, getLinks: scrapeLinks, limit, async, skipKeywords, debug });
 

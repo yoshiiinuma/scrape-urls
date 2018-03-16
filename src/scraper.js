@@ -4,7 +4,7 @@ import ScrapedLinks from './scraped-links.js';
 
 export default (args) => {
   const regexLinkType = /(stylesheet|icon|shortcut icon)/;
-  var baseUrl = args.rootUrl;
+  var baseUrl = args.baseUrl;
   var known = {};
   var allFound = args.allFound; 
   var debug = args.debug;
