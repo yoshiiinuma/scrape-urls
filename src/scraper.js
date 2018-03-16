@@ -3,16 +3,16 @@ import cheerio from 'cheerio';
 import ScrapedLinks from './scraped-links.js';
 
 export default (args) => {
+  const regexLinkType = /(stylesheet|icon|shortcut icon)/;
   var rootUrl = args.rootUrl;
   var known = {};
   var allLinks = args.allLinks; 
   var debug = args.debug;
 
+
   let startUrl = rootUrl.href.replace(/\/$/, '');
   known[startUrl] = true;
   allLinks.push(startUrl);
-
-  var regexLinkType = /(stylesheet|icon|shortcut icon)/;
 
   return (html) => {
     let $ = cheerio.load(html);
